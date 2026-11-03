@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mis Tamales · Haz tu pedido</title>
+<meta name="description" content="Elige tus tamales y atoles y haz tu pedido en línea.">
+<style>
+  :root{
+    --crema:#FFF8E8; --hoja:#E6D3A0; --hoja-osc:#B89A5B; --maiz:#F2C14E;
+    --chile:#B3261E; --chile-osc:#8E1C16; --verde:#2F6B3A; --cafe:#3B2A20; --gris:#7A6B5D;
+    --borde:#EADFC4; --blanco:#fff; --sombra:0 6px 20px rgba(59,42,32,.12);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--crema);color:var(--cafe);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;line-height:1.45}
+  h1,h2,h3{font-family:Georgia,"Times New Roman",serif;margin:0}
+  button{font:inherit;cursor:pointer}
+  .oculto{display:none !important}
+
+  /* Aviso de modo demostración */
+  .demo{background:var(--cafe);color:#fff;text-align:center;font-size:.8rem;padding:.4rem .75rem}
+
+  /* Encabezado */
+  header.top{position:sticky;top:0;z-index:20;background:var(--cafe);color:var(--crema);
+    display:flex;align-items:center;justify-content:space-between;padding:.7rem 1rem;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+  .marca{font-family:Georgia,serif;font-size:1.3rem;letter-spacing:.02em}
+  .marca span{color:var(--maiz)}
+  .btn-carrito{position:relative;background:var(--maiz);color:var(--cafe);border:0;border-radius:999px;
+    padding:.5rem .95rem;font-weight:700;display:flex;align-items:center;gap:.4rem}
+  .btn-carrito .num{background:var(--chile);color:#fff;border-radius:999px;min-width:1.4rem;height:1.4rem;
+    display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;padding:0 .35rem}
+
+  /* Portada */
+  .portada{padding:1.6rem 1rem 1rem;max-width:1000px;margin:0 auto}
+  .portada h1{font-size:clamp(1.7rem,6vw,2.4rem);line-height:1.1}
+  .portada p{margin:.5rem 0 0;color:var(--gris);max-width:36rem}
+
+  /* Productos */
+  main{max-width:1000px;margin:0 auto;padding:0 1rem 5rem}
+  h2.cat{font-size:1.25rem;margin:1.6rem 0 0;display:flex;align-items:center;gap:.7rem}
+  h2.cat::after{content:"";flex:1;height:2px;background:var(--borde)}
+  .rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:.9rem;margin-top:1rem}
+  .tarjeta{background:var(--blanco);border:1px solid var(--borde);border-radius:16px;overflow:hidden;
+    display:flex;flex-direction:column;box-shadow:0 2px 8px rgba(59,42,32,.06)}
+  .foto{background:linear-gradient(180deg,#FFF1CC,#FBE3A5);position:relative;aspect-ratio:10/7;display:flex;align-items:center;justify-content:center}
+  .foto svg,.foto img{width:100%;height:100%;object-fit:cover}
+  .etiqueta{position:absolute;top:.5rem;left:.5rem;background:var(--chile);color:#fff;font-size:.68rem;
+    font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:.2rem .5rem;border-radius:999px}
+  .info{padding:.75rem .8rem .85rem;display:flex;flex-direction:column;gap:.25rem;flex:1}
+  .info h3{font-size:1rem;line-height:1.2}
+  .info .desc{font-size:.82rem;color:var(--gris);flex:1}
+  .precio{font-weight:800;color:var(--chile);font-size:1.05rem;margin-top:.2rem}
+  .btn{border:0;border-radius:10px;padding:.65rem .9rem;font-weight:700}
+  .btn-agregar{background:var(--verde);color:#fff;margin-top:.4rem}
+  .btn-agregar:active{transform:scale(.98)}
+  .btn-primario{background:var(--chile);color:#fff}
+  .btn-primario:disabled{opacity:.6;cursor:wait}
+  .btn-sec{background:#fff;color:var(--cafe);border:1.5px solid var(--cafe)}
+
+  /* Capas */
+  .velo{position:fixed;inset:0;background:rgba(30,18,10,.55);z-index:30;opacity:0;pointer-events:none;transition:opacity .2s}
+  .velo.abierto{opacity:1;pointer-events:auto}
+
+  /* Carrito */
+  .panel{position:fixed;top:0;right:0;height:100%;width:min(420px,100%);background:#fff;z-index:40;
+    display:flex;flex-direction:column;transform:translateX(105%);transition:transform .25s;box-shadow:var(--sombra)}
+  .panel.abierto{transform:none}
+  .panel header{display:flex;justify-content:space-between;align-items:center;padding:1rem;border-bottom:1px solid var(--borde)}
+  .panel h2{font-size:1.2rem}
+  .cerrar{background:none;border:0;font-size:1.6rem;line-height:1;color:var(--cafe);padding:.1rem .5rem}
+  .lineas{flex:1;overflow:auto;padding:.5rem 1rem}
+  .vacio{color:var(--gris);text-align:center;margin-top:3rem}
+  .linea{display:grid;grid-template-columns:64px 1fr auto;gap:.7rem;align-items:center;padding:.7rem 0;border-bottom:1px solid var(--borde)}
+  .linea .mini{width:64px;height:48px;border-radius:8px;overflow:hidden;background:#FBE3A5}
+  .linea .mini svg,.linea .mini img{width:100%;height:100%;object-fit:cover}
+  .linea h4{margin:0;font-size:.92rem;line-height:1.2}
+  .linea .pu{font-size:.8rem;color:var(--gris)}
+  .cant{display:inline-flex;align-items:center;gap:.4rem;margin-top:.3rem}
+  .cant button{width:1.9rem;height:1.9rem;border-radius:50%;border:1.5px solid var(--cafe);background:#fff;font-size:1.1rem;line-height:1;padding:0}
+  .cant b{min-width:1.4rem;text-align:center}
+  .linea .der{text-align:right;font-weight:700}
+  .quitar{background:none;border:0;color:var(--chile);font-size:.78rem;text-decoration:underline;padding:.2rem 0;display:block;margin-left:auto}
+  .pie-carrito{padding:1rem;border-top:1px solid var(--borde);background:var(--crema)}
+  .total-fila{display:flex;justify-content:space-between;font-size:1.15rem;font-weight:800;margin-bottom:.8rem}
+  .pie-carrito .btn{width:100%}
+
+  /* Modales */
+  .modal{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center;pointer-events:none;opacity:0;transition:opacity .2s}
+  .modal.abierto{opacity:1;pointer-events:auto}
+  .caja{background:#fff;width:min(480px,100%);max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:1.2rem 1.1rem 1.4rem;
+    transform:translateY(20px);transition:transform .2s;border-top:5px solid var(--maiz)}
+  .modal.abierto .caja{transform:none}
+  @media(min-width:600px){.modal{align-items:center}.caja{border-radius:18px}}
+  .caja h2{font-size:1.3rem;margin-bottom:.8rem}
+  label{display:block;font-weight:600;font-size:.88rem;margin:.7rem 0 .25rem}
+  input,textarea{width:100%;font:inherit;padding:.65rem .75rem;border:1.5px solid var(--borde);border-radius:10px;background:#fffdf7;color:var(--cafe)}
+  input:focus,textarea:focus{outline:2px solid var(--maiz);border-color:var(--hoja-osc)}
+  textarea{min-height:5rem;resize:vertical}
+  .par{display:grid;grid-template-columns:1.5fr 1fr;gap:.7rem}
+  .par input{min-width:0;min-height:2.9rem}
+  .nota{font-size:.78rem;color:var(--gris);margin-top:.3rem}
+  .resumen{background:var(--crema);border-radius:12px;padding:.7rem .85rem;margin-top:1rem}
+  .resumen h3{font-size:.95rem;margin-bottom:.4rem}
+  .resumen .f{display:flex;justify-content:space-between;gap:.8rem;font-size:.88rem;padding:.15rem 0}
+  .resumen .t{border-top:1.5px dashed var(--hoja-osc);margin-top:.4rem;padding-top:.4rem;font-weight:800;font-size:1rem}
+  .acciones{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:1rem}
+  .error{color:var(--chile-osc);font-size:.85rem;margin-top:.6rem;min-height:1.2em}
+  .exito{text-align:center}
+  .exito .ok{width:64px;height:64px;border-radius:50%;background:var(--verde);color:#fff;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:.2rem auto .8rem}
+  .exito p{margin:.4rem 0;color:var(--gris)}
+  .exito .folio{display:inline-block;background:var(--crema);border:1.5px dashed var(--hoja-osc);border-radius:10px;padding:.35rem .8rem;font-weight:800;color:var(--cafe);margin:.4rem 0 .8rem}
+
+  #tostada{position:fixed;left:50%;bottom:1.2rem;transform:translate(-50%,20px);background:var(--cafe);color:#fff;z-index:60;
+    padding:.65rem 1rem;border-radius:12px;font-size:.88rem;max-width:90%;opacity:0;pointer-events:none;transition:.2s}
+  #tostada.visible{opacity:1;transform:translate(-50%,0)}
+  footer{text-align:center;color:var(--gris);font-size:.8rem;padding:1.5rem 1rem 2.5rem}
+  @media (prefers-reduced-motion:reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="demo oculto" id="aviso-demo">Modo demostración: los pedidos no se están enviando. Falta pegar la URL en WEB_APP_URL.</div>
+
+<header class="top">
+  <div class="marca" id="marca"></div>
+  <button class="btn-carrito" id="abrir-carrito" aria-label="Abrir carrito">
+    <span aria-hidden="true">🛒</span> Carrito <span class="num" id="contador">0</span>
+  </button>
+</header>
+
+<section class="portada">
+  <h1>Haz tu pedido</h1>
+  <p>Elige tus tamales y atoles, deja tus datos y te contactamos para confirmar tu pedido.</p>
+</section>
+
+<main>
+  <div id="catalogo"></div>
+</main>
+
+<footer id="pie"></footer>
+<div id="tostada" role="status" aria-live="polite"></div>
+
+<!-- Carrito -->
+<div class="velo" id="velo"></div>
+<aside class="panel" id="panel" role="dialog" aria-modal="true" aria-label="Tu carrito">
+  <header><h2>Tu carrito</h2><button class="cerrar" id="cerrar-carrito" aria-label="Cerrar">×</button></header>
+  <div class="lineas" id="lineas"></div>
+  <div class="pie-carrito">
+    <div class="total-fila"><span>Total</span><span id="total-carrito">$0</span></div>
+    <button class="btn btn-primario" id="finalizar">Finalizar pedido</button>
+  </div>
+</aside>
+
+<!-- Datos del cliente -->
+<div class="modal" id="modal-datos" role="dialog" aria-modal="true" aria-label="Finalizar pedido">
+  <div class="caja">
+    <h2>Finalizar pedido</h2>
+    <form id="form-pedido" novalidate>
+      <label for="nombre">Nombre completo *</label>
+      <input id="nombre" name="nombre" autocomplete="name" maxlength="80" required>
+      <label for="telefono">Teléfono *</label>
+      <input id="telefono" name="telefono" type="tel" inputmode="tel" autocomplete="tel" maxlength="25" required placeholder="10 dígitos">
+      <label for="direccion">Dirección de entrega *</label>
+      <textarea id="direccion" name="direccion" autocomplete="street-address" maxlength="250" required placeholder="Calle, número, colonia y referencias"></textarea>
+      <div class="par">
+        <div>
+          <label for="fecha_entrega">Fecha de entrega *</label>
+          <input id="fecha_entrega" name="fecha_entrega" type="date" required>
+        </div>
+        <div>
+          <label for="hora_entrega">Hora *</label>
+          <input id="hora_entrega" name="hora_entrega" type="time" step="900" required>
+        </div>
+      </div>
+      <div class="nota" id="nota-horario"></div>
+
+      <div class="resumen">
+        <h3>Resumen del pedido</h3>
+        <div id="resumen-lineas"></div>
+        <div class="f t"><span>Total</span><span id="resumen-total">$0</span></div>
+      </div>
+
+      <div class="error" id="error-form" role="alert"></div>
+      <div class="acciones">
+        <button type="button" class="btn btn-sec" id="volver">Volver al carrito</button>
+        <button type="submit" class="btn btn-primario" id="confirmar">Confirmar pedido</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Confirmación -->
+<div class="modal" id="modal-ok" role="dialog" aria-modal="true" aria-label="Pedido recibido">
+  <div class="caja exito">
+    <div class="ok" aria-hidden="true">✓</div>
+    <h2 id="ok-titulo">¡Gracias!</h2>
+    <p>Recibimos tu pedido.</p>
+    <div class="folio" id="ok-folio"></div>
+    <p id="ok-texto"></p>
+    <button class="btn btn-primario" id="ok-cerrar" style="width:100%;margin-top:.8rem">Seguir viendo el menú</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CONFIGURACIÓN: aquí cambias lo que necesitas
+   ============================================================ */
+const CONFIG = {
+  NEGOCIO: 'Mis Tamales',       // nombre de tu negocio
+  WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbz6bxEOmxsG99lHDfvcmYAJklf7pyoqcj0vHy62MEZx4y0LvSXfmErDzhxy2MawLdFY/exec',              // ← pega aquí la URL de tu aplicación web de Apps Script
+  MAX_PRODUCTOS: 10,            // máximo de productos distintos por pedido (igual que en Code.gs)
+  DIAS_ANTICIPACION: 3,         // días mínimos entre hoy y la entrega (igual que en Code.gs)
+  HORA_DESDE: '06:00',          // primera hora de entrega que se puede elegir (ejemplo: cámbiala)
+  HORA_HASTA: '23:00',          // última hora de entrega que se puede elegir
+  // Sabores y precios: cámbialos o agrégalos aquí. "categoria" agrupa el menú en secciones.
+  // "imagen" es opcional: pon la ruta o URL de una foto y reemplaza el dibujo.
+  PRODUCTOS: [
+    { categoria:'Tamales', id:'rajas', nombre:'Tamal de rajas', descripcion:'Rajas de chile', precio:20, color:'#FF6347' },
+    { categoria:'Tamales', id:'mole',  nombre:'Tamal de mole',  descripcion:'Con mole',       precio:20, color:'#5A2E1B' },
+    { categoria:'Tamales', id:'verde', nombre:'Tamal verde',    descripcion:'En salsa verde', precio:20, color:'#5E8F3E' },
+    { categoria:'Tamales', id:'dulce', nombre:'Tamal dulce',    descripcion:'Sabor dulce',    precio:20, color:'#D9758F' },
+    // "dibujo" puede ser 'vaso' o 'jarra' (si no pones nada, sale el dibujo de tamal)
+    { categoria:'Atoles', id:'arroz-vaso',     nombre:'Atole de arroz (vaso)',      descripcion:'Por vaso',  precio:20, color:'#F1E3BC', dibujo:'vaso'  },
+    { categoria:'Atoles', id:'arroz-litro',    nombre:'Atole de arroz (litro)',     descripcion:'Por litro', precio:80, color:'#F1E3BC', dibujo:'jarra' },
+    { categoria:'Atoles', id:'chocolate-vaso', nombre:'Atole de chocolate (vaso)',  descripcion:'Por vaso',  precio:20, color:'#6B3A22', dibujo:'vaso'  },
+    { categoria:'Atoles', id:'chocolate-litro',nombre:'Atole de chocolate (litro)', descripcion:'Por litro', precio:80, color:'#6B3A22', dibujo:'jarra' }
+  ]
+};
+/* ============================================================ */
+
+const $ = (id) => document.getElementById(id);
+const pesos = (n) => '$' + (Number.isInteger(n) ? n.toLocaleString('es-MX')
+  : n.toLocaleString('es-MX', {minimumFractionDigits:2, maximumFractionDigits:2}));
+
+let carrito = {};   // { idProducto: cantidad }
+
+try { carrito = JSON.parse(localStorage.getItem('carrito_tamales') || '{}') || {}; } catch (e) { carrito = {}; }
+// Quita del carrito guardado lo que ya no exista en el catálogo
+Object.keys(carrito).forEach(id => {
+  if (!CONFIG.PRODUCTOS.some(p => p.id === id) || !(carrito[id] > 0)) delete carrito[id];
+});
+const guardar = () => { try { localStorage.setItem('carrito_tamales', JSON.stringify(carrito)); } catch (e) {} };
+
+/* ---------- Dibujo del tamal (se usa si el producto no tiene foto) ---------- */
+function tamalSVG(color) {
+  return `<svg viewBox="0 0 200 140" aria-hidden="true">
+    <ellipse cx="102" cy="122" rx="74" ry="7" fill="rgba(59,42,32,.14)"/>
+    <path d="M60 36c-5-8 5-12 0-20M82 34c-5-8 5-12 0-20M104 36c-5-8 5-12 0-20" stroke="rgba(122,107,93,.45)" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M34 56q0-10 12-10h112q14 0 14 12v44q0 12-14 12H46q-12 0-12-10z" fill="#E6D3A0" stroke="#B89A5B" stroke-width="2"/>
+    <path d="M56 48v62M78 48v62M122 48v62M144 48v62" stroke="#C9B176" stroke-width="1.6" fill="none"/>
+    <rect x="94" y="44" width="18" height="68" rx="4" fill="#8A6A3B"/>
+    <rect x="94" y="44" width="18" height="10" rx="4" fill="#A0804C"/>
+    <ellipse cx="34" cy="80" rx="13" ry="33" fill="#F6E7B8" stroke="#B89A5B" stroke-width="2"/>
+    <ellipse cx="34" cy="80" rx="7.5" ry="21" fill="${color}"/>
+  </svg>`;
+}
+
+function vasoSVG(color) {
+  return `<svg viewBox="0 0 200 140" aria-hidden="true">
+    <ellipse cx="100" cy="122" rx="62" ry="7" fill="rgba(59,42,32,.14)"/>
+    <path d="M84 40c-5-8 5-12 0-20M104 38c-5-8 5-12 0-20M124 40c-5-8 5-12 0-20" stroke="rgba(122,107,93,.45)" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M140 66q28 0 28 24t-28 24" fill="none" stroke="#B89A5B" stroke-width="8" stroke-linecap="round"/>
+    <path d="M60 50h84v56q0 14-14 14H74q-14 0-14-14z" fill="#F6EBD3" stroke="#B89A5B" stroke-width="2.5"/>
+    <ellipse cx="102" cy="50" rx="42" ry="9" fill="${color}" stroke="#B89A5B" stroke-width="2.5"/>
+  </svg>`;
+}
+function jarraSVG(color) {
+  return `<svg viewBox="0 0 200 140" aria-hidden="true">
+    <ellipse cx="100" cy="124" rx="48" ry="6" fill="rgba(59,42,32,.14)"/>
+    <rect x="88" y="14" width="24" height="16" rx="4" fill="#8A6A3B"/>
+    <path d="M90 30h20v10q22 6 22 28v44q0 12-12 12H80q-12 0-12-12V68q0-22 22-28z" fill="${color}" stroke="#B89A5B" stroke-width="2.5"/>
+    <path d="M76 70v40" stroke="rgba(255,255,255,.45)" stroke-width="5" stroke-linecap="round"/>
+    <rect x="68" y="78" width="64" height="28" fill="#FFF8E8" stroke="#B89A5B" stroke-width="2"/>
+    <text x="100" y="98" text-anchor="middle" font-family="system-ui,sans-serif" font-size="17" font-weight="700" fill="#3B2A20">1 litro</text>
+  </svg>`;
+}
+const imagenProducto = (p) => p.imagen
+  ? `<img src="${encodeURI(p.imagen)}" alt="${p.nombre.replace(/"/g,'&quot;')}" loading="lazy">`
+  : p.dibujo === 'vaso' ? vasoSVG(p.color || '#B3261E')
+  : p.dibujo === 'jarra' ? jarraSVG(p.color || '#B3261E')
+  : tamalSVG(p.color || '#B3261E');
+
+/* ---------- Catálogo ---------- */
+function pintarCatalogo() {
+  const cont = $('catalogo');
+  cont.innerHTML = '';
+  const grupos = [];   // categorías en el orden en que aparecen
+  CONFIG.PRODUCTOS.forEach(p => {
+    const nombreCat = p.categoria || 'Menú';
+    let g = grupos.find(x => x.nombre === nombreCat);
+    if (!g) { g = { nombre: nombreCat, items: [] }; grupos.push(g); }
+    g.items.push(p);
+  });
+  grupos.forEach(g => {
+    const h = document.createElement('h2');
+    h.className = 'cat'; h.textContent = g.nombre;
+    const rejilla = document.createElement('div');
+    rejilla.className = 'rejilla';
+    g.items.forEach(p => {
+      const t = document.createElement('article');
+      t.className = 'tarjeta';
+      t.innerHTML = `
+        <div class="foto">${imagenProducto(p)}${p.etiqueta ? '<span class="etiqueta"></span>' : ''}</div>
+        <div class="info">
+          <h3></h3><div class="desc"></div>
+          <div class="precio">${pesos(p.precio)}</div>
+          <button class="btn btn-agregar">Agregar</button>
+        </div>`;
+      t.querySelector('h3').textContent = p.nombre;
+      t.querySelector('.desc').textContent = p.descripcion || '';
+      if (p.etiqueta) t.querySelector('.etiqueta').textContent = p.etiqueta;
+      t.querySelector('.btn-agregar').addEventListener('click', () => agregar(p.id));
+      rejilla.appendChild(t);
+    });
+    cont.append(h, rejilla);
+  });
+}
+
+/* ---------- Carrito ---------- */
+const producto = (id) => CONFIG.PRODUCTOS.find(p => p.id === id);
+const lineas = () => Object.keys(carrito).map(id => {
+  const p = producto(id);
+  return { id, nombre:p.nombre, cantidad:carrito[id], precio:p.precio, total:p.precio * carrito[id], p };
+});
+const totalCarrito = () => lineas().reduce((s, l) => s + l.total, 0);
+
+function agregar(id) {
+  if (!carrito[id] && Object.keys(carrito).length >= CONFIG.MAX_PRODUCTOS) {
+    alertaCarrito(`Solo puedes pedir hasta ${CONFIG.MAX_PRODUCTOS} productos distintos por pedido.`);
+    return;
+  }
+  carrito[id] = Math.min((carrito[id] || 0) + 1, 99);
+  actualizar();
+  const b = $('abrir-carrito'); b.animate([{transform:'scale(1)'},{transform:'scale(1.12)'},{transform:'scale(1)'}], {duration:220});
+}
+function cambiar(id, d) {
+  carrito[id] = (carrito[id] || 0) + d;
+  if (carrito[id] <= 0) delete carrito[id];
+  if (carrito[id] > 99) carrito[id] = 99;
+  actualizar();
+}
+function quitar(id) { delete carrito[id]; actualizar(); }
+let tostadaTimer;
+function alertaCarrito(msg) {
+  const t = $('tostada'); t.textContent = msg; t.classList.add('visible');
+  clearTimeout(tostadaTimer); tostadaTimer = setTimeout(() => t.classList.remove('visible'), 3200);
+}
+
+function actualizar() {
+  guardar();
+  const ls = lineas();
+  $('contador').textContent = ls.reduce((s, l) => s + l.cantidad, 0);
+  $('total-carrito').textContent = pesos(totalCarrito());
+  const cont = $('lineas');
+  cont.innerHTML = '';
+  if (!ls.length) { cont.innerHTML = '<p class="vacio">Tu carrito está vacío.<br>Agrega algo del menú 🌽</p>'; }
+  ls.forEach(l => {
+    const d = document.createElement('div');
+    d.className = 'linea';
+    d.innerHTML = `
+      <div class="mini">${imagenProducto(l.p)}</div>
+      <div><h4></h4><div class="pu">${pesos(l.precio)} c/u</div>
+        <div class="cant"><button aria-label="Quitar uno">−</button><b>${l.cantidad}</b><button aria-label="Agregar uno">+</button></div></div>
+      <div class="der">${pesos(l.total)}<button class="quitar">Quitar</button></div>`;
+    d.querySelector('h4').textContent = l.nombre;
+    const [menos, mas] = d.querySelectorAll('.cant button');
+    menos.addEventListener('click', () => cambiar(l.id, -1));
+    mas.addEventListener('click', () => cambiar(l.id, 1));
+    d.querySelector('.quitar').addEventListener('click', () => quitar(l.id));
+    cont.appendChild(d);
+  });
+  $('finalizar').disabled = !ls.length;
+  $('finalizar').style.opacity = ls.length ? 1 : .5;
+}
+
+/* ---------- Abrir / cerrar capas ---------- */
+function abrirCarrito() { $('panel').classList.add('abierto'); $('velo').classList.add('abierto'); }
+function cerrarTodo() {
+  ['panel','velo','modal-datos','modal-ok'].forEach(id => $(id).classList.remove('abierto'));
+}
+const dosDigitos = (n) => String(n).padStart(2, '0');
+const aISO = (d) => `${d.getFullYear()}-${dosDigitos(d.getMonth() + 1)}-${dosDigitos(d.getDate())}`;
+const hoyISO = () => aISO(new Date());
+// Primera fecha de entrega permitida: hoy + días de anticipación
+const fechaMinISO = () => { const d = new Date(); d.setDate(d.getDate() + CONFIG.DIAS_ANTICIPACION); return aISO(d); };
+const textoDias = (n) => n === 1 ? '1 día' : `${n} días`;
+const hora12 = (hhmm) => { const [h, m] = hhmm.split(':').map(Number);
+  return new Date(2000, 0, 1, h, m).toLocaleTimeString('es-MX', { hour:'numeric', minute:'2-digit' }); };
+const fechaLarga = (iso) => { const [a, m, d] = iso.split('-').map(Number);
+  return new Date(a, m - 1, d).toLocaleDateString('es-MX', { weekday:'long', day:'numeric', month:'long' }); };
+
+function abrirDatos() {
+  if (!lineas().length) return;
+  $('fecha_entrega').min = fechaMinISO();
+  const anticipo = CONFIG.DIAS_ANTICIPACION > 0
+    ? `Pedidos con ${textoDias(CONFIG.DIAS_ANTICIPACION)} de anticipación. Primera fecha disponible: ${fechaLarga(fechaMinISO())}. ` : '';
+  $('nota-horario').textContent = `${anticipo}Horario de entrega: de ${hora12(CONFIG.HORA_DESDE)} a ${hora12(CONFIG.HORA_HASTA)}`;
+  const cont = $('resumen-lineas'); cont.innerHTML = '';
+  lineas().forEach(l => {
+    const f = document.createElement('div'); f.className = 'f';
+    const a = document.createElement('span'); a.textContent = `${l.nombre} ×${l.cantidad}`;
+    const b = document.createElement('span'); b.textContent = pesos(l.total);
+    f.append(a, b); cont.appendChild(f);
+  });
+  $('resumen-total').textContent = pesos(totalCarrito());
+  $('error-form').textContent = '';
+  $('panel').classList.remove('abierto');
+  $('velo').classList.add('abierto');
+  $('modal-datos').classList.add('abierto');
+}
+$('abrir-carrito').addEventListener('click', abrirCarrito);
+$('cerrar-carrito').addEventListener('click', cerrarTodo);
+$('velo').addEventListener('click', cerrarTodo);
+$('finalizar').addEventListener('click', abrirDatos);
+$('volver').addEventListener('click', () => { $('modal-datos').classList.remove('abierto'); abrirCarrito(); });
+$('ok-cerrar').addEventListener('click', cerrarTodo);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarTodo(); });
+
+/* ---------- Enviar el pedido a Google Sheets ---------- */
+// Al corregir cualquier dato, se quita el mensaje de error anterior
+$('form-pedido').addEventListener('input', () => { $('error-form').textContent = ''; });
+$('form-pedido').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const f = ev.target, err = $('error-form'), btn = $('confirmar');
+  const nombre = f.nombre.value.trim(), telefono = f.telefono.value.trim(), direccion = f.direccion.value.trim();
+  const ls = lineas();
+
+  if (!ls.length) { err.textContent = 'Tu carrito está vacío.'; return; }
+  if (!nombre || !telefono || !direccion) { err.textContent = 'Completa tu nombre, teléfono y dirección.'; return; }
+  if (telefono.replace(/\D/g, '').length < 10) { err.textContent = 'Escribe un teléfono de 10 dígitos.'; return; }
+  if (ls.length > CONFIG.MAX_PRODUCTOS) { err.textContent = `Máximo ${CONFIG.MAX_PRODUCTOS} productos distintos por pedido.`; return; }
+
+  const fechaE = f.fecha_entrega.value, horaE = f.hora_entrega.value;
+  if (!fechaE || !horaE) { err.textContent = 'Elige la fecha y la hora de entrega.'; return; }
+  if (fechaE < fechaMinISO()) {
+    err.textContent = `Los pedidos se hacen con ${textoDias(CONFIG.DIAS_ANTICIPACION)} de anticipación. La primera fecha disponible es ${fechaLarga(fechaMinISO())}.`;
+    return;
+  }
+  if (horaE < CONFIG.HORA_DESDE || horaE > CONFIG.HORA_HASTA) {
+    err.textContent = `Elige una hora de entrega entre ${hora12(CONFIG.HORA_DESDE)} y ${hora12(CONFIG.HORA_HASTA)}`; return;
+  }
+  const [ea, em, ed] = fechaE.split('-').map(Number), [eh, emi] = horaE.split(':').map(Number);
+  if (new Date(ea, em - 1, ed, eh, emi) < new Date()) {
+    err.textContent = 'Esa fecha y hora ya pasaron. Elige una más adelante.'; return;
+  }
+  const cuandoTexto = `${fechaLarga(fechaE)} a las ${hora12(horaE)}`;
+
+  const datos = new URLSearchParams();
+  datos.set('nombre', nombre);
+  datos.set('telefono', telefono);
+  datos.set('direccion', direccion);
+  datos.set('fecha_entrega', fechaE);
+  datos.set('hora_entrega', horaE);
+  datos.set('total_general', totalCarrito());
+  ls.forEach((l, i) => {
+    datos.set(`prod_${i + 1}_nombre`, l.nombre);
+    datos.set(`prod_${i + 1}_cantidad`, l.cantidad);
+    datos.set(`prod_${i + 1}_total`, l.total);
+  });
+
+  err.textContent = '';
+  btn.disabled = true; btn.textContent = 'Enviando…';
+  try {
+    let respuesta;
+    if (!CONFIG.WEB_APP_URL) {
+      await new Promise(r => setTimeout(r, 600));
+      respuesta = { resultado: 'exito', id_orden: 'DEMO-' + String(Date.now()).slice(-4) };
+    } else {
+      const r = await fetch(CONFIG.WEB_APP_URL, { method: 'POST', body: datos });
+      respuesta = await r.json();
+    }
+    if (respuesta.resultado !== 'exito') {
+      const e = new Error(respuesta.mensaje || 'Error al guardar');
+      e.deServidor = !!respuesta.mensaje;   // mensaje pensado para el cliente (ej. fecha no permitida)
+      throw e;
+    }
+
+    $('ok-titulo').textContent = `¡Gracias, ${nombre.split(' ')[0]}!`;
+    $('ok-folio').textContent = 'Pedido ' + (respuesta.id_orden || '');
+    $('ok-texto').textContent = `Entrega solicitada: ${cuandoTexto} (te contactaremos al ${telefono} para confirmar).`;
+    carrito = {}; actualizar(); f.reset();
+    $('modal-datos').classList.remove('abierto');
+    $('modal-ok').classList.add('abierto');
+  } catch (e) {
+    console.error('No se pudo enviar el pedido:', e);
+    err.textContent = e.deServidor ? e.message : 'No pudimos enviar tu pedido. Revisa tu conexión e inténtalo de nuevo.';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Confirmar pedido';
+  }
+});
+
+/* ---------- Inicio ---------- */
+document.title = CONFIG.NEGOCIO + ' · Haz tu pedido';
+$('marca').innerHTML = '<span>●</span> ';
+$('marca').append(CONFIG.NEGOCIO);
+$('pie').textContent = '© ' + new Date().getFullYear() + ' ' + CONFIG.NEGOCIO;
+if (!CONFIG.WEB_APP_URL) $('aviso-demo').classList.remove('oculto');
+pintarCatalogo();
+actualizar();
+</script>
+</body>
+</html>
